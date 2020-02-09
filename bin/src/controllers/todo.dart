@@ -16,7 +16,7 @@ class TodoController implements ResponseImpl {
     }
     final _todos = await _model.getList();
     return ServerResponse(
-      'List Todos',
+      'List Todoss',
       body: _todos.map((t) => t.toJson()).toList(),
     ).ok();
   }
