@@ -1,21 +1,20 @@
-import 'dart:io' show Platform;
-import 'dart:async' show runZoned;
-import 'package:path/path.dart' show join, dirname;
+import 'dart:io';
+
+import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as io;
-import 'package:shelf_static/shelf_static.dart';
+
+import 'src/routing.dart';
 
 void main() {
-  // Assumes the server lives in bin/ and that `webdev build` ran
-  var pathToBuild = join(dirname(Platform.script.toFilePath()), '..', 'build');
+  final handler = const shelf.Pipeline()
+      .addMiddleware(shelf.logRequests())
+      .addHandler(RouteUtils.handler);
 
-  var handler = createStaticHandler(pathToBuild, defaultDocument: 'index.html');
+  final port = int.tryParse(Platform.environment['PORT'] ?? '8080');
+  final address = InternetAddress.anyIPv4;
 
-  var portEnv = Platform.environment['PORT'];
-  var port = portEnv == null ? 9999 : int.parse(portEnv);
-
-  runZoned(() {
-    io.serve(handler, '0.0.0.0', port);
-    print("Serving $pathToBuild on port $port");
-  }, onError: (e, stackTrace) => print('Oh noes! $e $stackTrace'));
+  io.serve(handler, address, port).then((server) {
+    server.autoCompress = true;
+    print('Serving at http://${server.address.host}:${server.port}');
+  });
 }
-
